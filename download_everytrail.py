@@ -37,6 +37,11 @@ def save_to_file(trip_dir, filename, content):
         f.write(content)
     print "  Saved", dest
 
+def encode_html_for_file(html):
+    """Hack in a meta tag at the top of an HTML snippet to make the resulting
+    file display correctly in a web browser."""
+    return ('<meta charset="utf-8">\n' + html).encode('utf-8')
+
 def download_trip(trip_id):
     trip_url = URL_BASE + TRIP_URL_TEMPLATE.format(trip_id)
     print "Downloading {0}".format(trip_url)
@@ -56,12 +61,12 @@ def download_trip(trip_id):
     save_to_file(trip_dir, 'title.txt', '\n'.join([title, location]))
 
     info_html = trip_page.find('.main-column-container.left > div > div').eq(0).html()
-    save_to_file(trip_dir, 'info.html', info_html.encode('utf-8'))
+    save_to_file(trip_dir, 'info.html', encode_html_for_file(info_html))
 
     stats_html = trip_page.find('.right-column.left .content').filter(
         lambda _, e: 'Trip Info' in pq(e).text()
     ).html()
-    save_to_file(trip_dir, 'stats.html', stats_html.encode('utf-8'))
+    save_to_file(trip_dir, 'stats.html', encode_html_for_file(stats_html))
 
     photos_link = trip_page.find('a').filter(lambda _, a: 'See all pictures' in pq(a).text())
     if photos_link:

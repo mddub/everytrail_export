@@ -6,12 +6,13 @@ import requests
 import simplejson as json
 from pyquery import PyQuery as pq
 
-USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [options]'
-DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including story and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. everytrail.com/view_trip.php?trip_id=2991898)."
+USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [--trailauth COOKIE] [options]'
+DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. everytrail.com/view_trip.php?trip_id=2991898)."
 
 URL_BASE = 'http://www.everytrail.com'
 TRIP_URL_TEMPLATE = '/view_trip.php?trip_id={0}'
 TRIP_URL_RE = re.compile('\/view_trip\.php\?trip_id=(\d+)')
+GPX_URL_TEMPLATE = '/downloadGPX.php?trip_id={0}'
 OUT_DIR = 'trails'
 
 def main():
@@ -20,6 +21,9 @@ def main():
     from optparse import OptionParser
 
     parser = OptionParser(usage=USAGE, description=DESCRIPTION)
+    parser.add_option('--trailauth',
+        action='store', type='string', dest='trailauth', metavar='COOKIE',
+        help='the value of the TRAILAUTH cookie from your web browser where you are logged into EveryTrail. This is necessary to enable downloading GPX files. It looks something like "d9b61a...". (See README for help on finding this value.)')
     parser.add_option('--skip-photos',
         action='store_true', dest='skip_photos', default=False,
         help="don't download photos")
@@ -27,7 +31,7 @@ def main():
         action='store', type='string', dest='out_dir', default=OUT_DIR,
         help="name of output directory where trip data will be saved (default: %default)")
     parser.add_option('--trips-page',
-        action='store', type='string', dest='trips_page',
+        action='store', type='string', dest='trips_page', metavar='URL',
         help="the URL of a trip listing page which will be scraped for individual trip URLs, e.g. everytrail.com/my_trips.php?user_id=154142. This can be used instead of, or in addition to, specifying trip IDs/URLs as command arguments.")
 
     options, args = parser.parse_args(sys.argv[1:])
@@ -40,9 +44,12 @@ def main():
         parser.print_help()
         sys.exit(0)
 
+    if not options.trailauth:
+        print "Will not download GPX files since no TRAILAUTH cookie was provided. `python {0} --help` for more information.".format(os.path.basename(sys.argv[0]))
+
     for i, trip_id in enumerate(trip_ids):
         print "Trip {0}/{1}:".format(i + 1, len(trip_ids))
-        download_trip(trip_id, options.out_dir, skip_photos=options.skip_photos)
+        download_trip(trip_id, options.out_dir, trailauth_cookie=options.trailauth, skip_photos=options.skip_photos)
 
 def normalize_arg_to_id(arg):
     if re.match('^\d+$', arg):
@@ -77,15 +84,34 @@ def trip_name_to_directory_name(name):
     out = out[:30]
     return out
 
-def get_html(url, retry_count=0):
+def _get_with_retries(url, cookies, max_retries_message, retry_count=0):
     if retry_count >= 3:
-        raise Exception("Retried too many times. Maybe EveryTrail is down?")
-    resp = requests.get(url)
+        raise Exception(max_retries_message)
+    resp = requests.get(url, cookies=cookies)
     if resp.status_code == 200:
-        return pq(resp.content)
+        return resp
     else:
         print "----- Response came back with HTTP status {0}; trying again... -----".format(resp.status_code)
-        return get_html(url, retry_count=retry_count+1)
+        return _get_with_retries(url, cookies, max_retries_message, retry_count=retry_count + 1)
+
+def get_html(url, retry_count=0):
+    resp = _get_with_retries(url, cookies=None, max_retries_message="Retried too many times. Maybe EveryTrail is down?")
+    return pq(resp.content)
+
+def get_gpx(url, trailauth_cookie, retry_count=0):
+    error_help = """Did you enter your TRAILAUTH cookie correctly?
+Can you access {0} directly from your browser?""".format(url)
+
+    resp = _get_with_retries(url, cookies={'TRAILAUTH': trailauth_cookie}, max_retries_message="Retried too many times.\n" + error_help)
+
+    expected_content_type = 'application/gpx+xml'
+    if resp.headers['Content-type'] != expected_content_type:
+        raise Exception('\n'.join([
+            'GPX response came back with content-type "{0}", expected "{1}"'.format(resp.headers['Content-type'], expected_content_type),
+            'Content: "{0}"'.format(resp.content[:100]),
+            error_help]))
+
+    return resp.content
 
 def save_to_file(trip_dir, filename, content):
     dest = os.path.join(trip_dir, filename)
@@ -98,9 +124,10 @@ def encode_html_for_file(html):
     file display correctly in a web browser."""
     return ('<meta charset="utf-8">\n' + html).encode('utf-8')
 
-def download_trip(trip_id, out_dir, skip_photos=False):
+def download_trip(trip_id, out_dir, trailauth_cookie=None, skip_photos=False):
     trip_url = URL_BASE + TRIP_URL_TEMPLATE.format(trip_id)
-    print "Downloading {0}".format(trip_url)
+    print "Downloading", format(trip_url)
+
     trip_page = get_html(trip_url)
 
     title = trip_page.find('h1 span').text()
@@ -123,6 +150,15 @@ def download_trip(trip_id, out_dir, skip_photos=False):
         lambda _, e: 'Trip Info' in pq(e).text()
     ).html()
     save_to_file(trip_dir, 'stats.html', encode_html_for_file(stats_html))
+
+    if trailauth_cookie:
+        gpx_url = URL_BASE + GPX_URL_TEMPLATE.format(trip_id)
+        print "  Saving GPX file..."
+        print "  Downloading", gpx_url
+        gpx = get_gpx(gpx_url, trailauth_cookie)
+        save_to_file(trip_dir, '{0}.gpx'.format(trip_id), gpx)
+    else:
+        print "  ----- Skipping GPX file, since no TRAILAUTH cookie was provided. -----"
 
     if not skip_photos:
         photos_link = trip_page.find('a').filter(lambda _, a: 'See all pictures' in pq(a).text())

@@ -79,7 +79,7 @@ def trip_name_to_directory_name(name):
     """
     out = name.lower()
     out = re.sub('[:/\ ]', '-', out)
-    out = re.sub('\.', '', out)
+    out = re.sub('[.,]', '', out)
     out = re.sub('--+', '-', out)
     out = out[:30]
     return out

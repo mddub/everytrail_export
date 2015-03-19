@@ -6,9 +6,65 @@ import requests
 import simplejson as json
 from pyquery import PyQuery as pq
 
+USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [options]'
+DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including story and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. everytrail.com/view_trip.php?trip_id=2991898)."
+
 URL_BASE = 'http://www.everytrail.com'
 TRIP_URL_TEMPLATE = '/view_trip.php?trip_id={0}'
+TRIP_URL_RE = re.compile('\/view_trip\.php\?trip_id=(\d+)')
 OUT_DIR = 'trails'
+
+def main():
+    """Process arguments when this script is run from the command line."""
+    import sys
+    from optparse import OptionParser
+
+    parser = OptionParser(usage=USAGE, description=DESCRIPTION)
+    parser.add_option('--skip-photos',
+        action='store_true', dest='skip_photos', default=False,
+        help="don't download photos")
+    parser.add_option('--out-dir',
+        action='store', type='string', dest='out_dir', default=OUT_DIR,
+        help="name of output directory where trip data will be saved (default: %default)")
+    parser.add_option('--trips-page',
+        action='store', type='string', dest='trips_page',
+        help="the URL of a trip listing page which will be scraped for individual trip URLs, e.g. everytrail.com/my_trips.php?user_id=154142. This can be used instead of, or in addition to, specifying trip IDs/URLs as command arguments.")
+
+    options, args = parser.parse_args(sys.argv[1:])
+
+    trip_ids = map(normalize_arg_to_id, args)
+    if options.trips_page:
+        trip_ids += get_trip_ids_from_listing_page(options.trips_page)
+
+    if not trip_ids:
+        parser.print_help()
+        sys.exit(0)
+
+    for i, trip_id in enumerate(trip_ids):
+        print "Trip {0}/{1}:".format(i + 1, len(trip_ids))
+        download_trip(trip_id, options.out_dir, skip_photos=options.skip_photos)
+
+def normalize_arg_to_id(arg):
+    if re.match('^\d+$', arg):
+        return arg
+    else:
+        result = TRIP_URL_RE.search(arg)
+        if result:
+            return result.group(1)
+        else:
+            raise Exception("Argument is neither trip ID nor trip page URL: {0}".format(arg))
+
+def get_trip_ids_from_listing_page(trips_page_url):
+    print "Scraping {0} for trip URLs...".format(trips_page_url)
+    trips_page = get_html(trips_page_url)
+    trip_ids = sorted([
+        normalize_arg_to_id(url)
+        for url in
+        trips_page.find('a').map(lambda _, a: a.attrib['href'])
+        if TRIP_URL_RE.search(url)
+    ])
+    print "Found links to {0} trips: {1}".format(len(trip_ids), ", ".join(trip_ids))
+    return trip_ids
 
 def trip_name_to_directory_name(name):
     """Convert a name like "Mt. Tam: Ridgecrest Blvd to Alpine Lake via..." to
@@ -42,7 +98,7 @@ def encode_html_for_file(html):
     file display correctly in a web browser."""
     return ('<meta charset="utf-8">\n' + html).encode('utf-8')
 
-def download_trip(trip_id):
+def download_trip(trip_id, out_dir, skip_photos=False):
     trip_url = URL_BASE + TRIP_URL_TEMPLATE.format(trip_id)
     print "Downloading {0}".format(trip_url)
     trip_page = get_html(trip_url)
@@ -51,7 +107,7 @@ def download_trip(trip_id):
     location = re.sub('^(-\s+)+', '', trip_page.find('h1').remove('span').text())
 
     # Output dir == something like 'trails/1820769-mt-tam-ridgecrest-blvd-to-al'
-    trip_dir = os.path.join(OUT_DIR, '-'.join([trip_id, trip_name_to_directory_name(title)]))
+    trip_dir = os.path.join(out_dir, '-'.join([trip_id, trip_name_to_directory_name(title)]))
     try:
         os.makedirs(trip_dir)
     except OSError:
@@ -68,10 +124,11 @@ def download_trip(trip_id):
     ).html()
     save_to_file(trip_dir, 'stats.html', encode_html_for_file(stats_html))
 
-    photos_link = trip_page.find('a').filter(lambda _, a: 'See all pictures' in pq(a).text())
-    if photos_link:
-        photos_page_url = URL_BASE + photos_link.eq(0).attr('href')
-        download_photos(trip_dir, photos_page_url)
+    if not skip_photos:
+        photos_link = trip_page.find('a').filter(lambda _, a: 'See all pictures' in pq(a).text())
+        if photos_link:
+            photos_page_url = URL_BASE + photos_link.eq(0).attr('href')
+            download_photos(trip_dir, photos_page_url)
 
 def download_photos(trip_dir, photos_page_url):
     images_dir = os.path.join(trip_dir, 'images')
@@ -128,9 +185,5 @@ def extract_info_and_download_full_photo(images_dir, photo_url):
         'filename': image_filename,
     }
 
-# TODO: could get this from a user's trip listing page
-my_trips = ["1550019", "1673357", "1693258", "1733157", "1741278", "1820769", "1924844", "1924847", "2022884", "2053816", "2108623", "2301920", "2348794", "2671553", "2991898"]
-
-for i, trip_id in enumerate(my_trips):
-    print "Trip {0}/{1}:".format(i + 1, len(my_trips))
-    download_trip(trip_id)
+if __name__ == '__main__':
+    main()

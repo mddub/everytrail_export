@@ -7,7 +7,7 @@ import simplejson as json
 from pyquery import PyQuery as pq
 
 USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [--trailauth COOKIE] [options]'
-DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. everytrail.com/view_trip.php?trip_id=2991898)."
+DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story, and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. http://everytrail.com/view_trip.php?trip_id=2991898)."
 
 URL_BASE = 'http://www.everytrail.com'
 TRIP_URL_TEMPLATE = '/view_trip.php?trip_id={0}'
@@ -24,15 +24,15 @@ def main():
     parser.add_option('--trailauth',
         action='store', type='string', dest='trailauth', metavar='COOKIE',
         help='the value of the TRAILAUTH cookie from your web browser where you are logged into EveryTrail. This is necessary to enable downloading GPX files. It looks something like "d9b61a...". (See README for help on finding this value.)')
+    parser.add_option('--trips-page',
+        action='store', type='string', dest='trips_page', metavar='URL',
+        help='the URL of a trip listing page which will be scraped for individual trip URLs, e.g. http://everytrail.com/my_trips.php?user_id=154142. This can be used instead of, or in addition to, specifying trip IDs/URLs as command arguments.')
     parser.add_option('--skip-photos',
         action='store_true', dest='skip_photos', default=False,
         help="don't download photos")
     parser.add_option('--out-dir',
         action='store', type='string', dest='out_dir', default=OUT_DIR,
-        help="name of output directory where trip data will be saved (default: %default)")
-    parser.add_option('--trips-page',
-        action='store', type='string', dest='trips_page', metavar='URL',
-        help="the URL of a trip listing page which will be scraped for individual trip URLs, e.g. everytrail.com/my_trips.php?user_id=154142. This can be used instead of, or in addition to, specifying trip IDs/URLs as command arguments.")
+        help="optionally specify output directory where trip data will be saved (default: %default)")
 
     options, args = parser.parse_args(sys.argv[1:])
 
@@ -70,7 +70,7 @@ def get_trip_ids_from_listing_page(trips_page_url):
         trips_page.find('a').map(lambda _, a: a.attrib['href'])
         if TRIP_URL_RE.search(url)
     ])
-    print "Found links to {0} trips: {1}".format(len(trip_ids), ", ".join(trip_ids))
+    print "Found links to {0} trips: {1}".format(len(trip_ids), " ".join(trip_ids))
     return trip_ids
 
 def trip_name_to_directory_name(name):

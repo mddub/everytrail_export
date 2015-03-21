@@ -1,3 +1,8 @@
+#!/usr/bin/python
+"""
+Scrape EveryTrail trip page(s) and download their contents, including GPX,
+story, and photos.
+"""
 import os
 import re
 import time

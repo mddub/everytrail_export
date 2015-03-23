@@ -44,22 +44,28 @@ $ python download_everytrail.py
 
 **Downloading GPX/KML data from EveryTrail requires being logged in.** This means you need to pass the login cookie from your web browser so that the script can act as a logged-in user.
 
-First, log into EveryTrail on your browser, which will set a cookie indicating to EveryTrail you are logged in. Then find the value of the `TRAILAUTH` cookie, which can be done in at least two ways:
+First, log into EveryTrail on your browser, which will set a cookie indicating to EveryTrail you are logged in. Then find the value of the `TRAILAUTH` cookie, which will be a long string of letters and numbers that looks like like `bce2a5ef9d3fd800e84f438f7237fe40dec5f1bd94cf67075ad17540ce956eed`. Finding this cookie can be done in at least two ways:
 
 1. Follow the instructions on this WikiHow page to view your browser's cookies: http://www.wikihow.com/View-Cookies
 
-2. While on an EveryTrail page, open your browser's web developer console (usually under the Tools menu) and type `document.cookie`. Look for the `TRAILAUTH` value, which is a long string of letters and numbers.
+2. While on an EveryTrail page, open your browser's web developer console (usually under the Tools menu) and type `document.cookie`. Look for the `TRAILAUTH` value.
 
 You can then pass the script that value using the `--trailauth` option.
 
 ### The --trips-page option
 
-If you use the `--trips-page` option to provide the URL for your trip listing page, then that list will scraped for individual trips to download:
+If you use the `--trips-page` option to provide the URL for your trip listing page, then that list will scraped for individual trips to download. That way, you don't have to pass the trips one at a time to the script.
+
+**To find your trips page,** make sure you are logged into EveryTrail, then hover your mouse over "My EveryTrail" in the menu at the top of the page, until you see the dropdown menu appear. Click "My Trips" in the dropdown menu. Copy the URL in the address bar of your browser.
+
+### Putting it all together
+
+Running the script with the `--trailauth` and `--trips-page` options will find all the trips listed at that URL, and then download the trips one by one:
 
 ```
 $ python download_everytrail.py \
-    --trips-page http://www.everytrail.com/my_trips.php?user_id=154142 \
-    --trailauth d9b61ab30a10...
+    --trailauth d9b61ab30a10... \
+    --trips-page http://www.everytrail.com/my_trips.php?user_id=154142
 Scraping http://www.everytrail.com/my_trips.php?user_id=154142 for trip URLs...
 Found links to 15 trips: 1550019 1673357 1693258 1733157 1741278 1820769 1924844 1924847 2022884 2053816 2108623 2301920 2348794 2671553 2991898
 Trip 1/15:
@@ -83,11 +89,11 @@ Trip 2/15:
 ...
 ```
 
-If you have so many trips that they span multiple listing pages, you will need to run the script for each listing page.
+If you have so many trips that they span multiple listing pages (your trips page has a "Next" link at the bottom), then you will need to run the script for each listing page.
 
 ### Downloading individual trips
 
-If you want to download only a specific trip or trips, you can specify them as arguments:
+An alternative way to call the script is to download only a specific trip or trips. In that case, you can specify them as arguments:
 
 ```
 $ python download_everytrail.py \

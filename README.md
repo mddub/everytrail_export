@@ -1,6 +1,6 @@
 # everytrail_export
 
-A Python script which scrapes EveryTrail trip pages for trip stories, photos, and GPX data. Intended for the export of one's own trips.
+A Python script which scrapes EveryTrail trip pages for trip stories, photos, and GPS data. Intended for the export of one's own trips.
 
 See [this blog post][blog-post] for the motivation behind this tool.
 
@@ -74,9 +74,11 @@ Downloading http://www.everytrail.com/view_trip.php?trip_id=1550019
   Saved trails/1550019-el-corte-de-madera-creek-trail/title.txt
   Saved trails/1550019-el-corte-de-madera-creek-trail/info.html
   Saved trails/1550019-el-corte-de-madera-creek-trail/stats.html
-  Saving GPX file...
+  Saving GPX and KMZ files...
   Downloading http://www.everytrail.com/downloadGPX.php?trip_id=1550019
   Saved trails/1550019-el-corte-de-madera-creek-trail/1550019.gpx
+  Downloading http://www.everytrail.com/downloadKML.php?trip_id=1550019
+  Saved trails/1550019-el-corte-de-madera-creek-trail/1550019.kmz
   Downloading photos page: http://www.everytrail.com/trip_pictures.php?trip_id=1550019&code=
   Photo 1/13:
     Downloading photo info page: http://www.everytrail.com/view_picture.php?trip_id=1550019&picture_id=4326030

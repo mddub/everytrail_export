@@ -97,11 +97,16 @@ def _get_with_retries(url, cookies, max_retries_message, retry_count=0):
     if retry_count >= MAX_RETRIES:
         raise Exception(max_retries_message)
     resp = requests.get(url, cookies=cookies)
-    if resp.status_code == 200:
-        return resp
-    else:
+    if resp.status_code != 200:
         print "----- Response came back with HTTP status {0}; trying again... -----".format(resp.status_code)
         return _get_with_retries(url, cookies, max_retries_message, retry_count=retry_count + 1)
+    elif "Application error" in resp.content:
+        seconds = 2 ** (retry_count + 1)
+        print "----- Response came back \"Application error\"; trying again in {0} seconds... -----".format(seconds)
+        time.sleep(seconds)
+        return _get_with_retries(url, cookies, max_retries_message, retry_count=retry_count + 1)
+    else:
+        return resp
 
 def get_html(url, retry_count=0):
     resp = _get_with_retries(url, cookies=None, max_retries_message=DEFAULT_RETRIES_MESSAGE)

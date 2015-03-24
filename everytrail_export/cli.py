@@ -1,4 +1,4 @@
-from scraper import get_trip_ids_from_listing_page, download_trip, _normalize_arg_to_id
+from .scraper import get_trip_ids_from_listing_page, download_trip, _normalize_arg_to_id
 
 USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [--trailauth COOKIE] [options]'
 DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story, and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. http://everytrail.com/view_trip.php?trip_id=2991898)."
@@ -34,7 +34,7 @@ def main():
         sys.exit(0)
 
     if not options.trailauth:
-        print "Will not download GPX/KML files since no TRAILAUTH cookie was provided. `python {0} --help` for more information.".format(os.path.basename(sys.argv[0]))
+        print "Will not download GPX/KML files since no TRAILAUTH cookie was provided. `{0} --help` for more information.".format(os.path.basename(sys.argv[0]))
 
     for i, trip_id in enumerate(trip_ids):
         print "Trip {0}/{1}:".format(i + 1, len(trip_ids))

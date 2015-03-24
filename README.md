@@ -6,39 +6,25 @@ See [this blog post][blog-post] for the motivation behind this tool.
 
 ## Installation
 
-This script has dependencies on [Requests][requests], [pyquery][pyquery], and [simplejson][simplejson]. The recommended way to install these is using `virtualenv` and `pip`.
+Install using `pip`:
 
-1. Open your terminal and clone this repository from Github:
+```
+pip install everytrail_export
+```
 
-    ```
-    git clone https://github.com/mddub/everytrail_export.git
-    cd everytrail_export
-    ```
+If this fails because of permissions, try `pip install everytrail_export --user`.
 
-2. Ensure you have `pip` installed: [installation instructions][install-pip]
-
-3. (Optional, but recommended) Ensure you have [virtualenv][virtualenv] installed, then set up an environment for this project in the project folder:
-
-    ```
-    virtualenv venv
-    source venv/bin/activate
-    ```
-
-4. Use `pip` to install requirements:
-
-    ```
-    pip install -r requirements.txt
-    ```
-
-Coming soon: releasing this as a PyPI package, which will greatly simplify installation.
+If this fails because pip is not installed, follow these instructions: https://pip.pypa.io/en/latest/installing.html
 
 ## Usage
 
-Invoking the script with no arguments gives usage instructions:
+Installing with pip makes an executable called `everytrail_export` available from the command line. Invoking the script with no arguments gives usage instructions:
 
 ```
-$ python download_everytrail.py
+everytrail_export
 ```
+
+If this fails, make sure that your system `$PATH` includes the location where executable scripts from Python packages are installed. (For example, if you installed with the `--user` option on OSX, package scripts are installed to `~/Library/Python/2.7/bin`.)
 
 ### The --trailauth option
 
@@ -63,8 +49,7 @@ If you use the `--trips-page` option to provide the URL for your trip listing pa
 Running the script with the `--trailauth` and `--trips-page` options will find all the trips listed at that URL, and then download the trips one by one:
 
 ```
-$ python download_everytrail.py \
-    --trailauth d9b61ab30a10... \
+$ everytrail_export --trailauth d9b61ab30a10... \
     --trips-page http://www.everytrail.com/my_trips.php?user_id=154142
 Scraping http://www.everytrail.com/my_trips.php?user_id=154142 for trip URLs...
 Found links to 15 trips: 1550019 1673357 1693258 1733157 1741278 1820769 1924844 1924847 2022884 2053816 2108623 2301920 2348794 2671553 2991898
@@ -74,7 +59,7 @@ Downloading http://www.everytrail.com/view_trip.php?trip_id=1550019
   Saved trails/1550019-el-corte-de-madera-creek-trail/title.txt
   Saved trails/1550019-el-corte-de-madera-creek-trail/info.html
   Saved trails/1550019-el-corte-de-madera-creek-trail/stats.html
-  Saving GPX and KMZ files...
+  Saving GPX and KML files...
   Downloading http://www.everytrail.com/downloadGPX.php?trip_id=1550019
   Saved trails/1550019-el-corte-de-madera-creek-trail/1550019.gpx
   Downloading http://www.everytrail.com/downloadKML.php?trip_id=1550019
@@ -98,8 +83,7 @@ If you have so many trips that they span multiple listing pages (your trips page
 An alternative way to call the script is to download only a specific trip or trips. In that case, you can specify them as arguments:
 
 ```
-$ python download_everytrail.py \
-    --trailauth d9b61ab30a10... \
+$ everytrail_export --trailauth d9b61ab30a10... \
     http://www.everytrail.com/view_trip.php?trip_id=2671553 \
     http://www.everytrail.com/view_trip.php?trip_id=2991898 \
     http://www.everytrail.com/view_trip.php?trip_id=2348794
@@ -113,9 +97,4 @@ If you have lots of photos but want to download only trip stories and GPS data, 
 
 If you have any questions, or run into trouble running this script, please email me at mark@warkmilson.com.
 
-[requests]:     http://docs.python-requests.org/en/latest/
-[pyquery]:      https://pypi.python.org/pypi/pyquery/
-[simplejson]:   https://pypi.python.org/pypi/simplejson/
-[install-pip]:  https://pip.pypa.io/en/latest/installing.html
-[virtualenv]:   http://docs.python-guide.org/en/latest/dev/virtualenvs/
 [blog-post]:    http://warkmilson.com/2015/03/20/exporting-from-everytrail.html

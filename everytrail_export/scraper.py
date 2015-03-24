@@ -1,9 +1,9 @@
-#!/usr/bin/python
 """
-Scrape EveryTrail trip page(s) and download their contents, including GPX,
+Scrape EveryTrail trip page(s) and download their contents, including GPS data,
 story, and photos.
 """
 import os
+
 import re
 import time
 
@@ -11,56 +11,16 @@ import requests
 import simplejson as json
 from pyquery import PyQuery as pq
 
-USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [--trailauth COOKIE] [options]'
-DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story, and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. http://everytrail.com/view_trip.php?trip_id=2991898)."
-
 MAX_RETRIES = 3
 DEFAULT_RETRIES_MESSAGE = "Retried too many times. Maybe EveryTrail is down?"
 
 URL_BASE = 'http://www.everytrail.com'
-TRIP_URL_TEMPLATE = '/view_trip.php?trip_id={0}'
 TRIP_URL_RE = re.compile('\/view_trip\.php\?trip_id=(\d+)')
+TRIP_URL_TEMPLATE = '/view_trip.php?trip_id={0}'
 GPX_URL_TEMPLATE = '/downloadGPX.php?trip_id={0}'
 KML_URL_TEMPLATE = '/downloadKML.php?trip_id={0}'
-OUT_DIR = 'trails'
 
-def main():
-    """Process arguments when this script is run from the command line."""
-    import sys
-    from optparse import OptionParser
-
-    parser = OptionParser(usage=USAGE, description=DESCRIPTION)
-    parser.add_option('--trailauth',
-        action='store', type='string', dest='trailauth', metavar='COOKIE',
-        help='the value of the TRAILAUTH cookie from your web browser where you are logged into EveryTrail. This is necessary to enable downloading GPX/KML files. It looks something like "d9b61a...". (See README for help on finding this value.)')
-    parser.add_option('--trips-page',
-        action='store', type='string', dest='trips_page', metavar='URL',
-        help='the URL of a trip listing page which will be scraped for individual trip URLs, e.g. http://everytrail.com/my_trips.php?user_id=154142. This can be used instead of, or in addition to, specifying trip IDs/URLs as command arguments.')
-    parser.add_option('--skip-photos',
-        action='store_true', dest='skip_photos', default=False,
-        help="don't download photos")
-    parser.add_option('--out-dir',
-        action='store', type='string', dest='out_dir', default=OUT_DIR,
-        help="optionally specify output directory where trip data will be saved (default: %default)")
-
-    options, args = parser.parse_args(sys.argv[1:])
-
-    trip_ids = map(normalize_arg_to_id, args)
-    if options.trips_page:
-        trip_ids += get_trip_ids_from_listing_page(options.trips_page)
-
-    if not trip_ids and not options.trips_page:
-        parser.print_help()
-        sys.exit(0)
-
-    if not options.trailauth:
-        print "Will not download GPX/KML files since no TRAILAUTH cookie was provided. `python {0} --help` for more information.".format(os.path.basename(sys.argv[0]))
-
-    for i, trip_id in enumerate(trip_ids):
-        print "Trip {0}/{1}:".format(i + 1, len(trip_ids))
-        download_trip(trip_id, options.out_dir, trailauth_cookie=options.trailauth, skip_photos=options.skip_photos)
-
-def normalize_arg_to_id(arg):
+def _normalize_arg_to_id(arg):
     if re.match('^\d+$', arg):
         return arg
     else:
@@ -74,7 +34,7 @@ def get_trip_ids_from_listing_page(trips_page_url):
     print "Scraping {0} for trip URLs...".format(trips_page_url)
     trips_page = get_html(trips_page_url)
     trip_ids = sorted([
-        normalize_arg_to_id(url)
+        _normalize_arg_to_id(url)
         for url in
         trips_page.find('a').map(lambda _, a: a.attrib['href'])
         if TRIP_URL_RE.search(url)
@@ -186,7 +146,7 @@ def download_trip(trip_id, out_dir, trailauth_cookie=None, skip_photos=False):
         kmz = get_kml(kml_url, trailauth_cookie)
         save_to_file(trip_dir, '{0}.kmz'.format(trip_id), kmz, mode='wb')
     else:
-        print "  ----- Skipping GPX file, since no TRAILAUTH cookie was provided. -----"
+        print "  ----- Skipping GPX and KML files, since no TRAILAUTH cookie was provided. -----"
 
     if not skip_photos:
         photos_link = trip_page.find('a').filter(lambda _, a: 'See all pictures' in pq(a).text())
@@ -248,6 +208,3 @@ def extract_info_and_download_full_photo(images_dir, photo_url):
         'title': photo_title,
         'filename': image_filename,
     }
-
-if __name__ == '__main__':
-    main()

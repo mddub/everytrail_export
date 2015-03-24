@@ -11,9 +11,9 @@ except ImportError:
 readme = os.path.join(os.path.dirname(__file__), 'README.md')
 setup(
     name='everytrail_export',
-    description='scraper for downloading trips from EveryTrail.',
-    long_description=read_md(readme),
-    version='0.1.0',
+    description='scraper for downloading trips from EveryTrail, including GPS data, story, and photos.',
+    long_description=read_md(readme) if os.path.exists(readme) else '',
+    version='0.1.2',
     url='https://github.com/mddub/everytrail_export',
     author='Mark Wilson',
     author_email='mark@warkmilson.com',

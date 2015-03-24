@@ -49,7 +49,7 @@ def main():
     if options.trips_page:
         trip_ids += get_trip_ids_from_listing_page(options.trips_page)
 
-    if not trip_ids:
+    if not trip_ids and not options.trips_page:
         parser.print_help()
         sys.exit(0)
 

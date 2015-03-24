@@ -105,6 +105,10 @@ $ python download_everytrail.py \
     http://www.everytrail.com/view_trip.php?trip_id=2348794
 ```
 
+### --skip-photos
+
+If you have lots of photos but want to download only trip stories and GPS data, the `--skip-photos` option will make the download much faster.
+
 ## Contact
 
 If you have any questions, or run into trouble running this script, please email me at mark@warkmilson.com.

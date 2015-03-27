@@ -97,4 +97,4 @@ If you have lots of photos but want to download only trip stories and GPS data, 
 
 If you have any questions, or run into trouble running this script, please email me at mark@warkmilson.com.
 
-[blog-post]:    http://warkmilson.com/2015/03/20/exporting-from-everytrail.html
+[blog-post]:    http://warkmilson.com/2015/03/27/exporting-from-everytrail.html

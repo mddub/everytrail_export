@@ -13,7 +13,7 @@ setup(
     name='everytrail_export',
     description='scraper for downloading trips from EveryTrail, including GPS data, story, and photos.',
     long_description=read_md(readme) if os.path.exists(readme) else '',
-    version='0.2.0',
+    version='0.2.1',
     url='https://github.com/mddub/everytrail_export',
     author='Mark Wilson',
     author_email='mark@warkmilson.com',

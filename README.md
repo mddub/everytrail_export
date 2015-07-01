@@ -93,6 +93,10 @@ $ everytrail_export --trailauth d9b61ab30a10... \
 
 If you have lots of photos but want to download only trip stories and GPS data, the `--skip-photos` option will make the download much faster.
 
+### --max-retries
+
+By default, the script will retry a failed request 5 times. If EveryTrail is being especially flaky, you can specify a higher value with the `--max-retries` option.
+
 ## Contact
 
 If you have any questions, or run into trouble running this script, please email me at mark@warkmilson.com.

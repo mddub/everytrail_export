@@ -206,12 +206,16 @@ Can you access {0} directly from your browser?""".format(url)
         if retry_count >= self._max_retries:
             raise Exception(max_retries_message)
         resp = requests.get(url, cookies={'TRAILAUTH': self._trailauth_cookie})
+
+        problem = None
         if resp.status_code != 200:
-            print "----- Response came back with HTTP status {0}; trying again... -----".format(resp.status_code)
-            return self._get_with_retries(url, max_retries_message, retry_count=retry_count + 1)
+            problem = "Response came back with HTTP status {0}".format(resp.status_code)
         elif "Application error" in resp.content:
+            problem = 'Response came back "Application error"'
+
+        if problem:
             seconds = 2 ** (retry_count + 1)
-            print "----- Response came back \"Application error\"; trying again in {0} seconds... -----".format(seconds)
+            print "{0}; trying again in {1} seconds...".format(problem, seconds)
             time.sleep(seconds)
             return self._get_with_retries(url, max_retries_message, retry_count=retry_count + 1)
         else:

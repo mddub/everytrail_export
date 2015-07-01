@@ -1,4 +1,4 @@
-from .scraper import get_trip_ids_from_listing_page, download_trip, _normalize_arg_to_id
+from .scraper import normalize_arg_to_id, EveryTrailScraper
 
 USAGE = '%prog trip_id_or_url_1 [trip_id_or_url_2 ...] [--trailauth COOKIE] [options]'
 DESCRIPTION = "Scrape EveryTrail trip page(s) and download their contents, including GPX, story, and photos. Arguments may be EveryTrail trip IDs (e.g. 2991898) or trip page URLs (e.g. http://everytrail.com/view_trip.php?trip_id=2991898)."
@@ -22,12 +22,22 @@ def main():
     parser.add_option('--out-dir',
         action='store', type='string', dest='out_dir', default=OUT_DIR,
         help="optionally specify output directory where trip data will be saved (default: %default)")
+    parser.add_option('--max-retries',
+        action='store', type='int', dest='max_retries', metavar='N', default=EveryTrailScraper.DEFAULT_MAX_RETRIES,
+        help="optionally specify the max number of times to retry a request if it fails (default: %default)")
 
     options, args = parser.parse_args(sys.argv[1:])
+    trip_ids = map(normalize_arg_to_id, args)
 
-    trip_ids = map(_normalize_arg_to_id, args)
+    scraper = EveryTrailScraper(
+        out_dir=options.out_dir,
+        trailauth_cookie=options.trailauth,
+        skip_photos=options.skip_photos,
+        max_retries=options.max_retries
+    )
+
     if options.trips_page:
-        trip_ids += get_trip_ids_from_listing_page(options.trips_page)
+        trip_ids += scraper.get_trip_ids_from_listing_page(options.trips_page)
 
     if not trip_ids and not options.trips_page:
         parser.print_help()
@@ -38,4 +48,4 @@ def main():
 
     for i, trip_id in enumerate(trip_ids):
         print "Trip {0}/{1}:".format(i + 1, len(trip_ids))
-        download_trip(trip_id, options.out_dir, trailauth_cookie=options.trailauth, skip_photos=options.skip_photos)
+        scraper.download_trip(trip_id)

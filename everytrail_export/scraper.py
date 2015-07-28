@@ -88,8 +88,8 @@ class EveryTrailScraper(object):
         except OSError:
             pass
 
-        print "  {0} - {1}".format(title, location)
-        save_to_file(trip_dir, 'title.txt', '\n'.join([title, location]))
+        print u"  {0} - {1}".format(title, location)
+        save_to_file(trip_dir, 'title.txt', '\n'.join([title, location]).encode('utf-8'))
 
         info_html = trip_page.find('.main-column-container.left > div > div').eq(0).html()
         save_to_file(trip_dir, 'info.html', encode_html_for_file(info_html))

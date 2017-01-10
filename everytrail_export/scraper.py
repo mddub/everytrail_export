@@ -168,7 +168,7 @@ class EveryTrailScraper(object):
         with open(dest_filename, 'wb') as f:
             for chunk in requests.get(image_url, stream=True):
                 f.write(chunk)
-        print '    Saved "{0}" to {1}'.format(photo_title, dest_filename)
+        print u'    Saved "{0}" to {1}'.format(photo_title, dest_filename)
 
         return {
             'lat': lat,
